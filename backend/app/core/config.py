@@ -1,13 +1,21 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# The deployed frontend. Always allowed, even if CORS_ORIGINS is missing it.
+PRODUCTION_FRONTEND_ORIGIN = "https://gov-it-prep.vercel.app"
+
+
+def _clean_origin(origin: str) -> str:
+    """Browsers send origins without a trailing slash, quotes or spaces."""
+    return origin.strip().strip("\"'").strip().rstrip("/")
+
 
 class Settings(BaseSettings):
     app_name: str = "Gov IT Prep Portal API"
     environment: str = "development"
     mongodb_uri: str
     mongodb_db_name: str = "gov_it_prep"
-    cors_origins: str = "http://localhost:5173"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     # Authentication
     jwt_secret_key: str = Field(min_length=32)
@@ -36,7 +44,12 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        origins: list[str] = []
+        for raw in [*self.cors_origins.split(","), PRODUCTION_FRONTEND_ORIGIN]:
+            origin = _clean_origin(raw)
+            if origin and origin != "*" and origin not in origins:
+                origins.append(origin)
+        return origins
 
 
 settings = Settings()
