@@ -1,0 +1,25 @@
+{
+  "appName": "Gov IT Prep Portal",
+  "phaseLabel": "Phase 0 · Setup check",
+  "intro": "This page confirms that the frontend, backend, and database are connected.",
+  "language": "Language",
+  "recheck": "Check again",
+  "status": {
+    "title": "System status",
+    "frontend": "Frontend",
+    "backend": "Backend server",
+    "database": "Database",
+    "running": "Running",
+    "working": "Working",
+    "connected": "Connected",
+    "unavailable": "Unavailable",
+    "checking": "Checking…",
+    "notChecked": "Not checked",
+    "unreachable": "Cannot reach the backend. Is it running on the expected address?"
+  },
+  "displayTest": {
+    "title": "Bangla display test",
+    "help": "The line below is sent by the backend. It should show Bangla letters correctly, not boxes or question marks.",
+    "raw": "Raw response"
+  }
+}

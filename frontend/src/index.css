@@ -1,0 +1,84 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Lesson reading mode — high-contrast, long-form study */
+.lesson-reading {
+  --lesson-font-size: 16.5px;
+  --lesson-body: #1F2937;
+  --lesson-heading: #111827;
+  --lesson-muted: #64748B;
+  --lesson-border: #E2E8F0;
+  --lesson-bg: #FFFFFF;
+  --lesson-page: #F8FAFC;
+  --lesson-link: #1D4ED8;
+  --lesson-link-hover: #1E40AF;
+}
+
+.lesson-reading .lesson-body {
+  font-size: var(--lesson-font-size);
+  color: var(--lesson-body);
+}
+
+.lesson-reading .lesson-content {
+  font-size: inherit;
+  line-height: 1.7;
+  color: var(--lesson-body);
+  font-weight: 400;
+}
+
+.lesson-reading .lesson-content p,
+.lesson-reading .lesson-content li,
+.lesson-reading .lesson-content td {
+  color: var(--lesson-body);
+}
+
+.lesson-reading .lesson-content h1,
+.lesson-reading .lesson-content h2 {
+  color: var(--lesson-heading);
+  font-weight: 700;
+}
+
+.lesson-reading .lesson-content h3,
+.lesson-reading .lesson-content h4 {
+  color: var(--lesson-body);
+  font-weight: 600;
+}
+
+.lesson-reading .lesson-content a {
+  color: var(--lesson-link);
+}
+
+.lesson-reading .lesson-content a:hover {
+  color: var(--lesson-link-hover);
+}
+
+/* KaTeX inherits readable body color */
+.lesson-reading .lesson-content .katex {
+  font-size: 1.05em;
+  color: var(--lesson-body);
+}
+
+.lesson-reading .lesson-content .katex-display {
+  margin: 1.1em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  padding: 0.15em 0;
+}
+
+.lesson-reading .lesson-content table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.lesson-reading .lesson-content pre {
+  max-width: 100%;
+}
+
+/* Focus / distraction-free mode */
+.lesson-focus-mode {
+  max-width: 52rem;
+  margin-left: auto;
+  margin-right: auto;
+}

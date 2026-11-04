@@ -1,0 +1,26 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# Secrets and local config (never commit these)
+.env
+.env.local
+
+# Local data used in later phases
+backend/storage/uploads/
+backend/storage/chroma/
+
+# OS
+Thumbs.db
+
+# Large generated archives
+*.zip
+
+# Large generated archives
+*.zip
