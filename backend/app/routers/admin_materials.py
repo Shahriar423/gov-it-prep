@@ -14,7 +14,8 @@ from app.schemas.material import (
     MaterialOptions,
     describe_validation_error,
 )
-from app.services import extraction_service, material_service
+from app.schemas.pasted_text import PastedTextIn
+from app.services import extraction_service, material_service, pasted_text_service
 
 # Every route in this file requires an admin (checked on the server)
 router = APIRouter(
@@ -103,6 +104,18 @@ async def upload_material(
         await extraction_service.set_paper_type(material["id"], chosen_type)
         if material["status"] == "ready":
             await extraction_service.queue_material(material["id"])
+    return material
+
+
+@router.post("/text", response_model=MaterialDetail, status_code=201)
+async def create_material_from_text(payload: PastedTextIn, admin: dict = Depends(require_admin)):
+    """Question text pasted into a box: saved like a previous-year PDF, then extracted and reviewed the same way."""
+    meta = _build_meta(
+        payload.title, "previous_year", payload.subject_id, payload.chapter_id, payload.exam_tags, payload.year
+    )
+    chosen_type = _paper_type_for(meta.kind, payload.paper_type)
+    material = await pasted_text_service.create_from_text(meta, payload.text, chosen_type, admin)
+    await extraction_service.queue_material(material["id"])
     return material
 
 

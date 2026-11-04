@@ -1,4 +1,4 @@
-import { FileSearch, Play, RotateCcw, Search, Upload } from "lucide-react";
+import { ClipboardPaste, FileSearch, Play, RotateCcw, Search, Upload } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -6,6 +6,7 @@ import { adminFetchSubjects } from "../../api/adminContent.api";
 import { fetchPyqMaterials, resumeExtraction, startExtraction } from "../../api/adminExtraction.api";
 import { fetchMaterialOptions } from "../../api/adminMaterials.api";
 import MaterialUploadModal from "../../components/admin/MaterialUploadModal";
+import PasteQuestionsModal from "../../components/admin/PasteQuestionsModal";
 import Badge from "../../components/common/Badge";
 import EmptyState from "../../components/common/EmptyState";
 import ErrorState from "../../components/common/ErrorState";
@@ -39,6 +40,7 @@ export default function AdminPreviousYearPage() {
   const [appliedSearch, setAppliedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [pasteOpen, setPasteOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [busyId, setBusyId] = useState("");
   const [actionError, setActionError] = useState("");
@@ -107,12 +109,26 @@ export default function AdminPreviousYearPage() {
     </button>
   );
 
+  const pasteButton = (
+    <button type="button" onClick={() => setPasteOpen(true)} disabled={!canUpload} className={btnSecondary}>
+      <ClipboardPaste className="h-4 w-4" aria-hidden="true" />
+      Paste question text
+    </button>
+  );
+
+  const headerActions = (
+    <div className="flex flex-wrap gap-2">
+      {pasteButton}
+      {uploadButton}
+    </div>
+  );
+
   return (
     <div>
       <PageHeader
         title="Previous-year papers"
-        description="Upload previous-year PDFs at any time and choose whether each is an MCQ PDF or a Written PDF. The text is extracted and the questions are found automatically by fixed rules, with no AI. Extracted questions stay pending until you review them."
-        actions={uploadButton}
+        description="Upload previous-year PDFs, or paste question text into a box, at any time, and choose whether it is MCQ or Written. The questions are found automatically by fixed rules, with no AI. Extracted questions stay pending until you review them."
+        actions={headerActions}
       />
 
       {!subjectsState.loading && subjects.length === 0 && (
@@ -245,7 +261,7 @@ export default function AdminPreviousYearPage() {
             description={
               hasFilters
                 ? "Try another status, type or search."
-                : "Upload a text-based, English previous-year question PDF. You can upload more at any time."
+                : "Upload a text-based, English previous-year question PDF, or paste question text. You can add more at any time."
             }
             action={hasFilters ? null : uploadButton}
           />
@@ -366,6 +382,24 @@ export default function AdminPreviousYearPage() {
               material.status === "ready"
                 ? `"${material.title}" was saved as a ${label} PDF. Question extraction starts automatically.`
                 : `"${material.title}" was saved, but its text could not be extracted. Open it for details and retry.`
+            );
+            setPage(1);
+            setStatus("");
+            load();
+          }}
+        />
+      )}
+
+      {pasteOpen && options && (
+        <PasteQuestionsModal
+          subjects={subjects}
+          options={options}
+          onClose={() => setPasteOpen(false)}
+          onCreated={(material, chosenType) => {
+            setPasteOpen(false);
+            const label = chosenType === "written" ? "written" : "MCQ";
+            setNotice(
+              `"${material.title}" was saved from pasted text as ${label} questions. Question extraction starts automatically, then the questions wait for your review.`
             );
             setPage(1);
             setStatus("");

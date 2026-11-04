@@ -63,6 +63,13 @@ export async function uploadMaterial(payload, file, onProgress) {
   return data;
 }
 
+// Question text pasted into a box instead of a PDF. It is saved like a previous-year PDF and then
+// extracted and reviewed the same way.
+export async function createMaterialFromText(payload) {
+  const { data } = await apiClient.post("/api/admin/materials/text", payload, { timeout: 60000 });
+  return data;
+}
+
 // Retry for a failed material: the PDF is not stored on the server, so the file is sent again
 export async function reprocessMaterial(materialId, file, onProgress) {
   const form = new FormData();
