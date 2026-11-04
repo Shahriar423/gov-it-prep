@@ -2,10 +2,10 @@
 
 Smart preparation and learning portal for Government IT job candidates (Bangladesh).
 
-- `frontend/` React + Vite + Tailwind (English only)
+- `frontend/` React + Vite + Tailwind 
 - `backend/` FastAPI + MongoDB Atlas
 
-Status: Phase 1 (authentication)
+Status: Phase 1 
 
 ## Backend
 ```powershell
