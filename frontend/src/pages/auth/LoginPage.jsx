@@ -120,7 +120,7 @@ export default function LoginPage() {
         <section className="relative flex flex-col px-8 py-10 sm:px-12 md:py-12">
           <div className="my-auto">
             <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400">
-              Gov IT Prep Portal
+              Keep Learning!
             </p>
             <h1 className="mt-2 text-center text-3xl font-bold text-gray-900">Login</h1>
 
