@@ -1,6 +1,7 @@
 import { Menu, X } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
+import ThemeToggle from "./ThemeToggle";
 import UserAvatar from "./UserAvatar";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -45,7 +46,8 @@ export default function Topbar({ onMenuClick, menuOpen = false }) {
         <h1 className="truncate text-lg font-semibold tracking-tight text-slate-900">{titleFor(pathname)}</h1>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <ThemeToggle />
         <div className="hidden text-right sm:block">
           <p className="text-sm font-semibold text-slate-900">{user?.name}</p>
           <p className="text-xs capitalize text-slate-500">{user?.role}</p>
