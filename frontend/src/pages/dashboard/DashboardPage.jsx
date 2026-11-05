@@ -4,7 +4,9 @@ import {
   ClipboardCheck,
   Clock,
   Layers,
+  ListChecks,
   RotateCcw,
+  Timer,
   TrendingUp,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -27,8 +29,24 @@ function scoreBadgeClass(percent) {
   return "bg-red-50 text-red-700";
 }
 
+// A short, useful sentence under the greeting
+function subtitleFor(stats) {
+  if (!stats) return "Here is your preparation progress at a glance.";
+  if (stats.weak_spots_due > 0) {
+    const n = stats.weak_spots_due;
+    return `You have ${n} ${n === 1 ? "question" : "questions"} due for revision. A quick review now keeps them fresh.`;
+  }
+  if (stats.chapters_total > 0 && stats.chapters_completed === 0) {
+    return "Pick a subject and complete your first chapter to start tracking your progress.";
+  }
+  if (stats.chapters_total > 0 && stats.chapters_completed < stats.chapters_total) {
+    return `You have completed ${stats.chapters_completed} of ${stats.chapters_total} chapters. Keep going!`;
+  }
+  return "Here is your preparation progress at a glance.";
+}
 
-function useLiveDateTime() {
+// The clock updates only itself, so the rest of the dashboard is not redrawn every second
+function LiveClock() {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -49,7 +67,21 @@ function useLiveDateTime() {
     hour12: true,
   });
 
-  return { dateLabel, timeLabel, now };
+  return (
+    <div
+      className="flex shrink-0 flex-col gap-1.5 rounded-xl bg-white/15 px-4 py-3 text-sm ring-1 ring-white/25 backdrop-blur"
+      aria-live="off"
+    >
+      <span className="inline-flex items-center gap-2">
+        <Calendar className="h-4 w-4 text-purple-100" aria-hidden="true" />
+        <span className="font-medium">{dateLabel}</span>
+      </span>
+      <span className="inline-flex items-center gap-2">
+        <Clock className="h-4 w-4 text-purple-100" aria-hidden="true" />
+        <time className="font-medium tabular-nums">{timeLabel}</time>
+      </span>
+    </div>
+  );
 }
 
 function DashboardSkeleton() {
@@ -68,40 +100,52 @@ function DashboardSkeleton() {
   );
 }
 
+const PRIMARY_PILL =
+  "inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-purple-700 shadow-sm transition hover:bg-purple-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+const SECONDARY_PILL =
+  "inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white ring-1 ring-white/30 transition hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const { data, loading, error, reload } = useDashboard();
-  const { dateLabel, timeLabel } = useLiveDateTime();
 
   const stats = data?.stats;
   const subjects = data?.subjects ?? [];
   const recent = data?.recent_attempts ?? [];
   const isAdmin = user?.role === "admin";
+  const dueCount = stats?.weak_spots_due ?? 0;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-            {getGreeting()}, {getFirstName(user?.name)}
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            {/* Here is your preparation progress at a glance. */}
-          </p>
-        </div>
-        <div
-          className="flex shrink-0 flex-col items-start gap-1 text-sm text-slate-600 sm:items-end"
-          aria-live="polite"
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <Calendar className="h-4 w-4 text-blue-600" aria-hidden="true" />
-            <span className="font-medium text-slate-800">{dateLabel}</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Clock className="h-4 w-4 text-blue-600" aria-hidden="true" />
-            <time className="font-medium tabular-nums text-slate-800">{timeLabel}</time>
-          </span>
+      {/* Welcome banner */}
+      <section className="relative overflow-hidden rounded-2xl bg-linear-to-br from-purple-700 via-purple-600 to-pink-500 p-6 text-white shadow-lg shadow-purple-500/20 sm:p-8">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-24 right-28 h-64 w-64 rounded-full bg-white/10" aria-hidden="true" />
+
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              {getGreeting()}, {getFirstName(user?.name)}
+            </h2>
+            <p className="mt-2 max-w-xl text-sm text-purple-100 sm:text-base">{subtitleFor(stats)}</p>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link to="/practice" className={PRIMARY_PILL}>
+                <ListChecks className="h-4 w-4" aria-hidden="true" />
+                Start practice
+              </Link>
+              <Link to="/exams" className={SECONDARY_PILL}>
+                <Timer className="h-4 w-4" aria-hidden="true" />
+                Take an exam
+              </Link>
+              <Link to="/weak-spots" className={SECONDARY_PILL}>
+                <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                {dueCount > 0 ? `Revise weak spots (${dueCount})` : "Weak spots"}
+              </Link>
+            </div>
+          </div>
+
+          <LiveClock />
         </div>
       </section>
 
@@ -166,14 +210,14 @@ export default function DashboardPage() {
 
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Subject progress */}
-            <section className="rounded-xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
-              <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
+            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-linear-to-r from-purple-50/70 to-transparent px-5 py-4">
                 <div>
                   <h3 className="font-semibold text-slate-900">Subject progress</h3>
                   <p className="text-sm text-slate-500">Chapters completed in each subject</p>
                 </div>
                 {subjects.length > 0 && (
-                  <Link to="/subjects" className="shrink-0 text-sm font-medium text-blue-700 hover:underline">
+                  <Link to="/subjects" className="shrink-0 text-sm font-semibold text-purple-700 hover:underline">
                     View all
                   </Link>
                 )}
@@ -202,11 +246,11 @@ export default function DashboardPage() {
                     <li key={subject.id}>
                       <Link
                         to={`/subjects/${subject.id}`}
-                        className="block px-5 py-4 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-blue-600"
+                        className="block px-5 py-4 transition hover:bg-purple-50/50 focus-visible:outline-2 focus-visible:outline-purple-600"
                       >
                         <div className="flex items-baseline justify-between gap-3">
                           <p className="truncate font-medium text-slate-900">{subject.name}</p>
-                          <p className="shrink-0 text-sm font-semibold text-slate-700">
+                          <p className="shrink-0 text-sm font-semibold text-purple-700">
                             {subject.chapters_total === 0 ? "—" : `${subject.progress_percent}%`}
                           </p>
                         </div>
@@ -231,8 +275,8 @@ export default function DashboardPage() {
 
             {/* Right column */}
             <div className="space-y-6">
-              <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-                <div className="border-b border-slate-100 px-5 py-4">
+              <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="border-b border-slate-100 bg-linear-to-r from-purple-50/70 to-transparent px-5 py-4">
                   <h3 className="font-semibold text-slate-900">Recent exam results</h3>
                 </div>
 
@@ -248,7 +292,7 @@ export default function DashboardPage() {
                       <li key={attempt.id}>
                         <Link
                           to={`/exams/attempts/${attempt.id}/result`}
-                          className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-blue-600"
+                          className="flex items-center justify-between gap-3 px-5 py-3 transition hover:bg-purple-50/50 focus-visible:outline-2 focus-visible:outline-purple-600"
                         >
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-slate-900">{attempt.title}</p>

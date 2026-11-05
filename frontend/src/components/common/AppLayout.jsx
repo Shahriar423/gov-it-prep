@@ -29,7 +29,7 @@ export default function AppLayout() {
   const toggleMenu = () => setMenuOpen((v) => !v);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-purple-50/60 text-slate-900">
       {/* Overlay drawer — closed by default; no layout space when closed */}
       <div
         className={`fixed inset-0 z-50 transition-opacity duration-200 ${
@@ -43,7 +43,7 @@ export default function AppLayout() {
           aria-label="Close menu"
           tabIndex={menuOpen ? 0 : -1}
           onClick={closeMenu}
-          className="absolute inset-0 bg-slate-900/40 transition-opacity"
+          className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
         />
 
         {/* Sliding panel */}
@@ -51,7 +51,7 @@ export default function AppLayout() {
           role="dialog"
           aria-modal="true"
           aria-label="Navigation menu"
-          className={`absolute inset-y-0 left-0 flex w-72 max-w-[85%] transform flex-col shadow-xl transition-transform duration-200 ease-out ${
+          className={`absolute inset-y-0 left-0 flex w-72 max-w-[85%] transform flex-col shadow-2xl transition-transform duration-200 ease-out ${
             menuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >

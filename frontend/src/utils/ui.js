@@ -7,7 +7,7 @@ export const labelClass = "block text-sm font-medium text-slate-700";
 const btnBase =
   "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60";
 
-export const btnPrimary = `${btnBase} bg-blue-600 text-white hover:bg-blue-700 focus-visible:outline-blue-600`;
+export const btnPrimary = `${btnBase} bg-linear-to-r from-purple-600 to-pink-500 text-white shadow-purple-500/25 transition hover:brightness-110 focus-visible:outline-blue-600`;
 export const btnSecondary = `${btnBase} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:outline-blue-600`;
 export const btnDanger = `${btnBase} bg-red-600 text-white hover:bg-red-700 focus-visible:outline-red-600`;
 

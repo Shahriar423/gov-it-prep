@@ -9,7 +9,7 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").
 export default function UserAvatar({ user, size = "sm", className = "" }) {
   const px = size === "lg" ? 80 : size === "md" ? 40 : 36;
   const text = size === "lg" ? "text-xl" : "text-sm";
-  const base = `flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 font-semibold text-blue-700 ${text}`;
+  const base = `flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-purple-600 to-pink-500 font-semibold text-white shadow-sm ring-2 ring-white ${text}`;
 
   let src = null;
   if (user?.avatar_url) {

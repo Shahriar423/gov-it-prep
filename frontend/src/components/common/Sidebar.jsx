@@ -43,10 +43,10 @@ const ADMIN_ITEMS = [
 ];
 
 const navLinkClass = ({ isActive }) =>
-  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-blue-600 ${
+  `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-purple-600 ${
     isActive
-      ? "bg-blue-50 text-blue-700"
-      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+      ? "bg-linear-to-r from-purple-600 to-pink-500 text-white shadow-md shadow-purple-500/25"
+      : "text-slate-600 hover:bg-purple-50 hover:text-purple-700"
   }`;
 
 export default function Sidebar({ onNavigate, onClose }) {
@@ -56,8 +56,8 @@ export default function Sidebar({ onNavigate, onClose }) {
     <div id="app-sidebar" className="flex h-full flex-col bg-white">
       {/* Brand */}
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-4">
-        <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-purple-600 to-pink-500 text-white shadow-md shadow-purple-500/30">
             <GraduationCap className="h-5 w-5" aria-hidden="true" />
           </span>
           <div className="leading-tight">
@@ -92,7 +92,7 @@ export default function Sidebar({ onNavigate, onClose }) {
 
         {user?.role === "admin" && (
           <div>
-            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
               Administration
             </p>
             <ul className="space-y-1">
@@ -111,10 +111,10 @@ export default function Sidebar({ onNavigate, onClose }) {
 
       {/* User + logout */}
       <div className="shrink-0 border-t border-slate-200 p-3">
-        <div className="flex items-center gap-3 rounded-lg px-2 py-2">
+        <div className="flex items-center gap-3 rounded-xl bg-linear-to-r from-purple-50 to-pink-50 px-3 py-2.5">
           <UserAvatar user={user} size="md" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-900">{user?.name}</p>
+            <p className="truncate text-sm font-semibold text-slate-900">{user?.name}</p>
             <p className="truncate text-xs capitalize text-slate-500">{user?.role}</p>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function Sidebar({ onNavigate, onClose }) {
             onNavigate?.();
             logout();
           }}
-          className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-blue-600"
+          className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-purple-600"
         >
           <LogOut className="h-5 w-5" aria-hidden="true" />
           Log out
