@@ -132,22 +132,25 @@ export default function ChapterPage() {
   const hasContent = chapter.content.trim().length > 0;
   const rootClass = [
     "lesson-reading mx-auto w-full pb-24",
+    focusMode ? "lesson-focus-mode" : "",
     prefs.font === "serif" ? "lesson-font-serif" : "",
     prefs.sepia && !isDark ? "lesson-sepia" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
+  const rootStyle = {
+    "--lesson-font-size": `${prefs.fontSize}px`,
+    "--lesson-leading": SPACING_VALUES[prefs.spacing],
+  };
+  // Focus mode keeps its own fixed centered column (lesson-focus-mode in index.css).
+  // Otherwise the article card is the reading column plus its side padding.
+  if (!focusMode) {
+    rootStyle.maxWidth = `calc(${WIDTH_VALUES[prefs.width]} + 6rem)`;
+  }
+
   return (
-    <div
-      className={rootClass}
-      style={{
-        "--lesson-font-size": `${prefs.fontSize}px`,
-        "--lesson-leading": SPACING_VALUES[prefs.spacing],
-        // The article card is the reading column plus its side padding
-        maxWidth: `calc(${WIDTH_VALUES[prefs.width]} + 6rem)`,
-      }}
-    >
+    <div className={rootClass} style={rootStyle}>
       {!focusMode && (
         <Breadcrumbs
           items={[
@@ -163,7 +166,7 @@ export default function ChapterPage() {
         <div className="rounded-xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur">
           <div className="flex items-center justify-between gap-2 px-3 py-1.5 sm:px-4">
             <p className="min-w-0 truncate text-xs text-slate-500 sm:text-sm" aria-live="polite">
-              {focusMode ? "Focus mode · press Esc to exit" : `${readMinutes} min read`}
+              {focusMode ? "Focus mode — press Esc to exit" : `${readMinutes} min read`}
               <span className="font-medium text-slate-700"> · {percent}% read</span>
             </p>
             <div className="flex shrink-0 items-center gap-1">
