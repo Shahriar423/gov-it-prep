@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
+import { convertComparisonTables } from "../../utils/comparisonTables";
 import { normalizeLessonContent } from "../../utils/lessonContent";
 
 /**
@@ -320,13 +321,15 @@ const lessonComponents = {
   ),
   table: ({ node, ...props }) => (
     <div className="my-[1.4em] overflow-x-auto rounded-xl border border-slate-200">
-      <table className="min-w-full border-collapse text-[0.95em]" {...props} />
+      <table className="min-w-full border-collapse text-[0.92em] sm:text-[0.95em]" {...props} />
     </div>
   ),
-  thead: ({ node, ...props }) => <thead className="bg-slate-100 text-left" {...props} />,
+  thead: ({ node, ...props }) => <thead className="text-left" {...props} />,
   tr: ({ node, ...props }) => <tr className="even:bg-slate-50" {...props} />,
-  th: ({ node, ...props }) => <th className="px-4 py-2.5 text-left font-semibold" {...props} />,
-  td: ({ node, ...props }) => <td className="border-t border-slate-200 px-4 py-2.5 align-top" {...props} />,
+  th: ({ node, ...props }) => (
+    <th className="bg-purple-50 px-2.5 py-2.5 text-left font-semibold text-purple-700 sm:px-4" {...props} />
+  ),
+  td: ({ node, ...props }) => <td className="border-t border-slate-200 px-2.5 py-2.5 align-top sm:px-4" {...props} />,
   blockquote: ({ node, ...props }) => <LessonCallout {...props} />,
   h1: ({ node, children, ...props }) => (
     <h1 id={headingId(children)} className="mb-[0.6em] mt-[1.6em] scroll-mt-36 text-[1.75em] font-bold tracking-tight first:mt-0" {...props}>
@@ -377,11 +380,13 @@ const lessonComponents = {
 /**
  * Renders chapter / lesson content.
  * Plain pasted notes are normalized into Markdown first; existing Markdown is kept.
- * variant="lesson" gives the roomy reading layout used on chapter pages.
+ * variant="lesson" gives the roomy reading layout used on chapter pages, and turns
+ * flattened "A vs B" comparisons into tables.
  */
 export default function MarkdownContent({ children, normalize = true, variant = "default" }) {
   const source = typeof children === "string" ? children : "";
-  const markdown = normalize ? normalizeLessonContent(source) : source;
+  const normalized = normalize ? normalizeLessonContent(source) : source;
+  const markdown = variant === "lesson" ? convertComparisonTables(normalized) : normalized;
 
   return (
     <div className="lesson-content max-w-none">
@@ -394,4 +399,4 @@ export default function MarkdownContent({ children, normalize = true, variant = 
       </ReactMarkdown>
     </div>
   );
-}
+    }
