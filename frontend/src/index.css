@@ -148,7 +148,7 @@ body {
 .dark .hover\:text-purple-700:hover,
 .dark .group:hover .group-hover\:text-blue-700 { color: #d8b4fe; }
 
-/* Lesson / markdown content uses fixed light-theme colours */
+/* Question text / explanations (the compact renderer) use fixed light-theme colours */
 .dark .text-\[\#1F2937\] { color: #e2e8f0; }
 .dark .text-\[\#111827\] { color: #f8fafc; }
 .dark .text-\[\#64748B\] { color: #94a3b8; }
@@ -172,46 +172,96 @@ body {
 .dark .border-\[\#FECDD3\] { border-color: rgb(244 63 94 / 0.4); }
 .dark .bg-\[\#FFF1F2\] { background-color: rgb(244 63 94 / 0.12); }
 
-/* Lesson reading mode — high-contrast, long-form study */
+/* ===================================================================
+   LESSON READING MODE (chapter pages)
+   All reading colours and sizes come from the --lesson-* variables below,
+   so the light, sepia and dark looks only differ in these values.
+   =================================================================== */
 .lesson-reading {
-  --lesson-font-size: 16.5px;
-  --lesson-body: #1F2937;
-  --lesson-heading: #111827;
-  --lesson-muted: #64748B;
-  --lesson-border: #E2E8F0;
-  --lesson-bg: #FFFFFF;
-  --lesson-page: #F8FAFC;
-  --lesson-link: #1D4ED8;
-  --lesson-link-hover: #1E40AF;
+  --lesson-font-size: 17px;
+  --lesson-leading: 1.8;
+  --lesson-font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  --lesson-body: #1f2937;
+  --lesson-heading: #0f172a;
+  --lesson-muted: #64748b;
+  --lesson-border: #e2e8f0;
+  --lesson-bg: #ffffff;
+  --lesson-bg-soft: #f8fafc;
+  --lesson-page: #f8fafc;
+  --lesson-link: #6d28d9;
+  --lesson-link-hover: #5b21b6;
 }
 
+.lesson-reading.lesson-font-serif {
+  --lesson-font-family: ui-serif, Georgia, Cambria, "Noto Serif", "Times New Roman", serif;
+}
+
+/* Sepia "paper": easier on the eyes for long reading in daylight */
+.lesson-reading.lesson-sepia {
+  --lesson-body: #3b2f20;
+  --lesson-heading: #2a2015;
+  --lesson-muted: #7b6a52;
+  --lesson-border: #dccfae;
+  --lesson-bg: #f7f0df;
+  --lesson-bg-soft: #efe5cc;
+  --lesson-page: #f1e8d0;
+  --lesson-link: #9a4d0c;
+  --lesson-link-hover: #7c3a06;
+}
+
+/* Dark mode wins over sepia (must stay below the sepia rule) */
 .dark .lesson-reading {
   --lesson-body: #e2e8f0;
   --lesson-heading: #f8fafc;
   --lesson-muted: #94a3b8;
   --lesson-border: #273148;
   --lesson-bg: #0f172a;
+  --lesson-bg-soft: #131c30;
   --lesson-page: #0b1120;
   --lesson-link: #c4b5fd;
   --lesson-link-hover: #ddd6fe;
 }
 
+.lesson-reading .lesson-article {
+  background-color: var(--lesson-bg);
+  border-color: var(--lesson-border);
+}
+
+.lesson-reading .lesson-header {
+  background-color: var(--lesson-bg-soft);
+  border-color: var(--lesson-border);
+}
+
+.lesson-reading .lesson-divider {
+  border-color: var(--lesson-border);
+}
+
 .lesson-reading .lesson-body {
+  font-family: var(--lesson-font-family);
   font-size: var(--lesson-font-size);
   color: var(--lesson-body);
+  text-rendering: optimizeLegibility;
 }
 
 .lesson-reading .lesson-content {
   font-size: inherit;
-  line-height: 1.7;
+  line-height: var(--lesson-leading);
   color: var(--lesson-body);
   font-weight: 400;
+  overflow-wrap: break-word;
 }
 
 .lesson-reading .lesson-content p,
 .lesson-reading .lesson-content li,
 .lesson-reading .lesson-content td {
   color: var(--lesson-body);
+}
+
+.lesson-reading .lesson-content h1,
+.lesson-reading .lesson-content h2,
+.lesson-reading .lesson-content h3,
+.lesson-reading .lesson-content h4 {
+  line-height: 1.3;
 }
 
 .lesson-reading .lesson-content h1,
@@ -224,6 +274,10 @@ body {
 .lesson-reading .lesson-content h4 {
   color: var(--lesson-body);
   font-weight: 600;
+}
+
+.lesson-reading .lesson-content strong {
+  color: var(--lesson-heading);
 }
 
 .lesson-reading .lesson-content a {
@@ -249,9 +303,8 @@ body {
 }
 
 .lesson-reading .lesson-content table {
-  display: block;
+  display: table;
   max-width: 100%;
-  overflow-x: auto;
 }
 
 .lesson-reading .lesson-content pre {

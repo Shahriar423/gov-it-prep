@@ -1,5 +1,5 @@
-import { ArrowLeft, ArrowRight, CheckCircle2, List, Minus, Plus, RotateCcw, Maximize2, Minimize2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, ArrowRight, ArrowUp, CheckCircle2, Clock, List, Maximize2, Minimize2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { fetchChapter, setChapterCompletion } from "../../api/content.api";
@@ -7,15 +7,54 @@ import ConceptFlow, { extractProcessSteps } from "../../components/common/Concep
 import Breadcrumbs from "../../components/common/Breadcrumbs";
 import ErrorState from "../../components/common/ErrorState";
 import MarkdownContent from "../../components/common/MarkdownContent";
+import ReadingSettings from "../../components/common/ReadingSettings";
 import Skeleton from "../../components/common/Skeleton";
 import { useAsyncData } from "../../hooks/useAsyncData";
+import { SPACING_VALUES, WIDTH_VALUES, useReadingPrefs } from "../../hooks/useReadingPrefs";
+import { useTheme } from "../../hooks/useTheme";
+import { useWakeLock } from "../../hooks/useWakeLock";
 import { getErrorMessage } from "../../utils/errors";
 import { extractToc, normalizeLessonContent } from "../../utils/lessonContent";
 import { btnPrimary, btnSecondary, cardClass } from "../../utils/ui";
 
-const FONT_MIN = 15;
-const FONT_MAX = 20;
-const FONT_DEFAULT = 16.5;
+// How far through the article the student has scrolled (0 to 100)
+function useReadingProgress(ref, active) {
+  const [percent, setPercent] = useState(0);
+
+  useEffect(() => {
+    if (!active) return undefined;
+    let frame = 0;
+
+    const update = () => {
+      frame = 0;
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const total = rect.height - window.innerHeight;
+      const value = total <= 0 ? 100 : Math.min(100, Math.max(0, Math.round((-rect.top / total) * 100)));
+      setPercent((current) => (current === value ? current : value));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [ref, active]);
+
+  return percent;
+}
+
+function estimateMinutes(content) {
+  const words = (content || "").trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+}
 
 export default function ChapterPage() {
   const { chapterId } = useParams();
@@ -23,11 +62,16 @@ export default function ChapterPage() {
     () => fetchChapter(chapterId),
     chapterId
   );
+  const { isDark } = useTheme();
+  const { prefs, setPref, reset } = useReadingPrefs();
   const [toggling, setToggling] = useState(false);
   const [toggleError, setToggleError] = useState("");
   const [tocOpen, setTocOpen] = useState(false);
-  const [fontSize, setFontSize] = useState(FONT_DEFAULT);
   const [focusMode, setFocusMode] = useState(false);
+  const articleRef = useRef(null);
+
+  const percent = useReadingProgress(articleRef, Boolean(chapter));
+  useWakeLock(prefs.keepAwake);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -51,6 +95,7 @@ export default function ChapterPage() {
     () => (chapter?.content ? extractProcessSteps(chapter.content) : []),
     [chapter?.content]
   );
+  const readMinutes = useMemo(() => estimateMinutes(chapter?.content), [chapter?.content]);
 
   async function toggleCompletion() {
     setToggling(true);
@@ -67,7 +112,7 @@ export default function ChapterPage() {
 
   if (loading) {
     return (
-      <div aria-busy="true" className="w-full space-y-4">
+      <div aria-busy="true" className="mx-auto w-full max-w-3xl space-y-4">
         <Skeleton className="h-6 w-64" />
         <Skeleton className="h-10 w-2/3" />
         <Skeleton className="h-96" />
@@ -85,11 +130,23 @@ export default function ChapterPage() {
   }
 
   const hasContent = chapter.content.trim().length > 0;
+  const rootClass = [
+    "lesson-reading mx-auto w-full pb-24",
+    prefs.font === "serif" ? "lesson-font-serif" : "",
+    prefs.sepia && !isDark ? "lesson-sepia" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div
-      className={`lesson-reading w-full pb-10 ${focusMode ? "lesson-focus-mode" : ""}`}
-      style={{ "--lesson-font-size": `${fontSize}px` }}
+      className={rootClass}
+      style={{
+        "--lesson-font-size": `${prefs.fontSize}px`,
+        "--lesson-leading": SPACING_VALUES[prefs.spacing],
+        // The article card is the reading column plus its side padding
+        maxWidth: `calc(${WIDTH_VALUES[prefs.width]} + 6rem)`,
+      }}
     >
       {!focusMode && (
         <Breadcrumbs
@@ -101,90 +158,78 @@ export default function ChapterPage() {
         />
       )}
 
-      {/* Compact reading toolbar */}
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-slate-500 sm:text-sm">
-          {focusMode ? "Focus mode — press Esc to exit" : "Reading view"}
-        </p>
-        <div
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm"
-          role="group"
-          aria-label="Reading controls"
-        >
-          <button
-            type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 disabled:opacity-40"
-            aria-label="Decrease font size"
-            disabled={fontSize <= FONT_MIN}
-            onClick={() => setFontSize((s) => Math.max(FONT_MIN, +(s - 1).toFixed(1)))}
+      {/* Reading toolbar: stays visible while scrolling */}
+      <div className="sticky top-[4.25rem] z-20 mb-4">
+        <div className="rounded-xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur">
+          <div className="flex items-center justify-between gap-2 px-3 py-1.5 sm:px-4">
+            <p className="min-w-0 truncate text-xs text-slate-500 sm:text-sm" aria-live="polite">
+              {focusMode ? "Focus mode · press Esc to exit" : `${readMinutes} min read`}
+              <span className="font-medium text-slate-700"> · {percent}% read</span>
+            </p>
+            <div className="flex shrink-0 items-center gap-1">
+              <ReadingSettings prefs={prefs} onChange={setPref} onReset={reset} isDark={isDark} />
+              <button
+                type="button"
+                onClick={() => setFocusMode((v) => !v)}
+                aria-pressed={focusMode}
+                aria-label={focusMode ? "Exit focus mode" : "Enter focus mode"}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-slate-700 transition hover:bg-purple-50 hover:text-purple-700 focus-visible:outline-2 focus-visible:outline-purple-600"
+              >
+                {focusMode ? (
+                  <Minimize2 className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" aria-hidden="true" />
+                )}
+                <span className="hidden sm:inline">{focusMode ? "Exit focus" : "Focus"}</span>
+              </button>
+            </div>
+          </div>
+          <div
+            role="progressbar"
+            aria-label="Reading progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+            className="h-1 w-full overflow-hidden rounded-b-xl bg-slate-100"
           >
-            <Minus className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="inline-flex h-8 items-center justify-center rounded-md px-2 text-xs font-medium text-slate-600 hover:bg-slate-100"
-            aria-label="Reset font size"
-            onClick={() => setFontSize(FONT_DEFAULT)}
-            title="Reset font size"
-          >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 disabled:opacity-40"
-            aria-label="Increase font size"
-            disabled={fontSize >= FONT_MAX}
-            onClick={() => setFontSize((s) => Math.min(FONT_MAX, +(s + 1).toFixed(1)))}
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <span className="mx-1 h-5 w-px bg-slate-200" aria-hidden="true" />
-          <button
-            type="button"
-            className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-slate-700 hover:bg-slate-100"
-            aria-label={focusMode ? "Exit focus mode" : "Enter focus mode"}
-            aria-pressed={focusMode}
-            onClick={() => setFocusMode((v) => !v)}
-          >
-            {focusMode ? (
-              <>
-                <Minimize2 className="h-3.5 w-3.5" aria-hidden="true" />
-                Exit focus
-              </>
-            ) : (
-              <>
-                <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
-                Focus
-              </>
-            )}
-          </button>
+            <div
+              className="h-full bg-linear-to-r from-purple-500 to-pink-500 transition-[width] duration-200"
+              style={{ width: `${percent}%` }}
+            />
+          </div>
         </div>
       </div>
 
-      <article className={`${cardClass} overflow-hidden`}>
-        <header className="border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white px-5 py-5 sm:px-8 sm:py-6 lg:px-10">
-          <p className="text-xs font-medium uppercase tracking-wide text-[#64748B]">
+      <article ref={articleRef} className="lesson-article overflow-hidden rounded-2xl border shadow-sm">
+        <header className="lesson-header border-b px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--lesson-muted)]">
             {chapter.subject.name}
             {chapter.subject.category ? ` · ${chapter.subject.category}` : ""}
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#111827] sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-bold leading-tight tracking-tight text-[color:var(--lesson-heading)] sm:text-3xl">
             {chapter.title}
           </h1>
           {chapter.summary && (
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#64748B] sm:text-base">
+            <p className="mt-3 max-w-3xl text-base leading-relaxed text-[color:var(--lesson-muted)]">
               {chapter.summary}
             </p>
           )}
-          {chapter.is_completed && (
-            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">
-              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-              Completed
-            </p>
-          )}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700">
+              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+              {readMinutes} min read
+            </span>
+            {chapter.is_completed && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">
+                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                Completed
+              </span>
+            )}
+          </div>
         </header>
 
         {toc.length >= 2 && (
-          <div className="border-b border-slate-100 px-5 py-3 sm:px-8 lg:px-10">
+          <div className="lesson-divider border-b px-5 py-3 sm:px-8 lg:px-10">
             <button
               type="button"
               onClick={() => setTocOpen((v) => !v)}
@@ -214,7 +259,7 @@ export default function ChapterPage() {
           </div>
         )}
 
-        <div className="lesson-body px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
+        <div className="lesson-body px-5 py-7 sm:px-8 sm:py-10 lg:px-10">
           {hasContent ? (
             <>
               {processSteps.length >= 3 && (
@@ -225,7 +270,7 @@ export default function ChapterPage() {
                   />
                 </div>
               )}
-              <MarkdownContent>{chapter.content}</MarkdownContent>
+              <MarkdownContent variant="lesson">{chapter.content}</MarkdownContent>
             </>
           ) : (
             <p className="text-sm text-slate-500">This chapter has no study content yet.</p>
@@ -295,6 +340,18 @@ export default function ChapterPage() {
             )}
           </nav>
         </>
+      )}
+
+      {/* Back to top, once the student has started scrolling */}
+      {percent > 4 && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Back to top"
+          className="fixed bottom-5 right-4 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-linear-to-br from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-500/30 transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 sm:right-6"
+        >
+          <ArrowUp className="h-5 w-5" aria-hidden="true" />
+        </button>
       )}
     </div>
   );
